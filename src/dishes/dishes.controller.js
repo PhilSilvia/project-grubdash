@@ -49,15 +49,33 @@ function create(req, res, next){
 }
 
 function dishExists(req, res, next){
-
+    const { dishId } = req.params;
+    const foundDish = dishes.find((dish) => dish.id === dishId);
+    if (foundDish){
+        res.locals.dish = foundDish;
+        return next();
+    }
+    next({
+        status: 404,
+        message: `Dish does not exist: ${dishId}`
+    })
 }
 
 function read(req, res, next){
-
+    const dish = res.locals.dish;
+    res.json({ data: dish });
 }
 
 function update(req, res, next){
+    const dish = res.locals.dish;
+    const { data: { name, description, price, image_url } = {} } = req.body;
 
+    dish.name = name;
+    dish.description = description;
+    dish.price = price;
+    dish.image_url = image_url;
+
+    res.json({ data: dish });
 }
 
 module.exports = {
@@ -71,8 +89,8 @@ module.exports = {
         create 
     ],
     read: [ dishExists, read ],
-    update: [ 
-        dishExists, 
+    update: [  
+        dishExists,
         bodyDataHas("name"), 
         bodyDataHas("description"), 
         bodyDataHas("price"),
