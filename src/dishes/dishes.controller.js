@@ -36,7 +36,16 @@ function priceIsValid(req, res, next){
 }
 
 function create(req, res, next){
-    res.json({ data: req.body.data });
+    const { data: { name, description, price, image_url } = {} } = req.body;
+    const newDish = {
+        id: nextId(),
+        name,
+        description,
+        price, 
+        image_url,
+    };
+    dishes.push(newDish);
+    res.status(201).json({ data: newDish });
 }
 
 function dishExists(req, res, next){
