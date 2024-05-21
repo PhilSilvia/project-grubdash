@@ -96,5 +96,6 @@ module.exports = {
         bodyDataHas("price"),
         bodyDataHas("image_url"),
         priceIsValid,
-        update ],
+        update 
+    ],
 };
