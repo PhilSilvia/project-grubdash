@@ -73,25 +73,59 @@ function create(req, res, next){
 
 // Validation function that ensures an order exists for a given id
 function orderExists(req, res, next){
-
+    // Retrieve the order id that is desired
+    const { orderId } = req.params;
+    // Find the order that matches the id
+    const foundOrder = orders.find((order) => order.id === orderId);
+    // If we successfully found a matching order
+    if (foundOrder){
+        // Store the found order in the locals
+        res.locals.order = foundOrder;
+        // Move onto the next middleware function
+        return next();
+    }
+    // Otherwise, return an error message to the user
+    next({
+        status: 404,
+        message: `Order does not exists: ${orderId}`
+    });
 }
 
 // Responds with the details for a given order id. Called after validating that
 // an order exists with the given id
 function read(req, res, next){
-
+    // Retrieve the found order from the locals
+    const { order } = res.locals;
+    // Respond with the order's information
+    res.json({ data: order });
 }
 
 // Updates the order of a given id with new properties. Called after validating the given properties
 // and that an order exists at the given id
 function update(req, res, next){
-
+    // Retrieve the found order from the locals
+    const { order } = res.locals;
+    // Retrieve the update details from the request body
+    const { data: { deliverTo, mobileNumber, status, dishes } = {} } = req.body;
+    // Update the order with the new properties
+    order.deliverTo = deliverTo;
+    order.mobileNumber = mobileNumber;
+    order.status = status;
+    order.dishes = dishes;
+    // Respond with the new order's information
+    res.json({ data: order });
 }
 
 // Deletes the entry for an order at a given id. Called after validating that an order exists at the
 // given id
 function destroy(req, res, next){
-
+    // Retrieve the desired id from the route parameters
+    const { orderId } = req.params;
+    // Remove the order from our list of orders
+    const index = orders.findIndex((order) => order.id === orderId);
+    orders.splice(index, 1);
+    // Respond with our success
+    res.sendStatus(204);
 }
 
 module.exports = {

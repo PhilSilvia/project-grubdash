@@ -87,21 +87,26 @@ function dishExists(req, res, next){
 
 // Returns the data for a specified dish based on its id. Called after validating that the dish exists.
 function read(req, res, next){
+    // Retrieves the found dish from the locals
     const dish = res.locals.dish;
+    // Responds with the dish's information
     res.json({ data: dish });
 }
 
 // Updates a given dish with new properties. Called after validating the given properties and 
 // that the dish exists. 
 function update(req, res, next){
+    // Retrieves the found dish from the locals
     const dish = res.locals.dish;
+    // Retrieves the updated properties from the request body
     const { data: { name, description, price, image_url } = {} } = req.body;
 
+    // Updates the dish with the new properties
     dish.name = name;
     dish.description = description;
     dish.price = price;
     dish.image_url = image_url;
-
+    // Responds with the updated dish's information
     res.json({ data: dish });
 }
 
