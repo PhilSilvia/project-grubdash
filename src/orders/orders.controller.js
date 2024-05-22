@@ -91,6 +91,77 @@ function orderExists(req, res, next){
     });
 }
 
+// Validation function that ensures a given status is either pending, preparing, 
+// out-for-delivery, or delivered
+function statusIsValid(req, res, next){
+    // Retrieve the status from the request body
+    const { data: { status } = {} } = req.body;
+    // If the status is one of our valid statuses, we move onto the next middleware function
+    const validStatus = [ "pending", "preparing", "out-for-delivery", "delivered" ];
+    if (validStatus.includes(status)){
+        return next();
+    }
+    // Otherwise, respond with an error for the user
+    next({
+        status: 400,
+        message: "Order must have a status of pending, preparing, out-for-delivery, delivered"
+    });
+}
+
+// Validation function that ensures a given order's id matches the one given by 
+// the route
+function idIsValid(req, res, next){
+    // Retrieve the id from the request body
+    const { data: { id } = {} } = req.body;
+    // Retrieve the id from the route parameters
+    const { orderId } = req.params;
+    // If they match, move onto the next middleware function
+    if (!id || id === orderId){
+        return next();
+    }
+    // Otherwise, respond with an error for the user
+    next({
+        status: 400,
+        message: `Order id does not match route id. Order: ${id}, Route: ${orderId}`
+    });
+}
+
+// Returns a validation function that ensures a given status is not a specified status, since we do
+// not allow delivered orders to be changed
+function statusIsNot(statusName){
+    return function(req, res, next){
+        // Retrieve the current order from the locals
+        const { order } = res.locals;
+        // If the order's status is not the specified status, we move onto the next middleware function
+        if (order.status !== statusName){
+            return next();
+        }
+        // Otherwise, respond with an error for the user
+        next({
+            status: 400,
+            message: `A ${statusName} order cannot be changed`
+        })
+    };
+}
+
+// Returns a validation function that ensures a given status is a specified status, since we only
+// allow pending orders to be deleted
+function statusIs(statusName){
+    return function(req, res, next){
+        // Retrieve the current order from the locals
+        const { order } = res.locals;
+        // If the order's status is the specified status, we move onto the next middleware function
+        if (order.status === statusName){
+            return next();
+        }
+        // Otherwise, respond with an error for the user
+        next({
+            status: 400,
+            message: `An order cannot be deleted unless it is ${statusName}`
+        });
+    }
+}
+
 // Responds with the details for a given order id. Called after validating that
 // an order exists with the given id
 function read(req, res, next){
@@ -138,6 +209,19 @@ module.exports = {
         create 
     ],
     read: [ orderExists, read ],
-    update: [ orderExists, update ],
-    delete: [ orderExists, destroy ],
+    update: [ 
+        orderExists, 
+        bodyDataHas("deliverTo"), 
+        bodyDataHas("mobileNumber"),
+        bodyDataHas("dishes"),
+        dishesIsValid,
+        statusIsValid,
+        statusIsNot("delivered"),
+        idIsValid,
+        update 
+    ],
+    delete: [ 
+        orderExists, 
+        statusIs("pending"),
+        destroy ],
 };

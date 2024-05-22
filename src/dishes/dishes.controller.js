@@ -47,6 +47,24 @@ function priceIsValid(req, res, next){
     });
 }
 
+// Validation function for the id, ensuring that the id for the given dish
+// matches the one given in the route
+function idIsValid(req, res, next){
+    // Retrieve the id from the route parameters
+    const { dishId } = req.params;
+    // Retrieve the id from the request body
+    const { data: { id } = {} } = req.body;
+    // If the two id's match, we move onto the next middleware function
+    if (!id || dishId === id){
+        return next();
+    }
+    // Otherwise, we return an error to the user
+    next({
+        status: 400,
+        message: `Dish id does not match route id. Dish: ${id}, Route: ${dishId}`
+    });
+}
+
 // Creates a new dish with the given properties. Called after all validation has been passed. 
 function create(req, res, next){
     // Retrieve the properties from the request body
@@ -128,6 +146,7 @@ module.exports = {
         bodyDataHas("price"),
         bodyDataHas("image_url"),
         priceIsValid,
+        idIsValid,
         update 
     ],
 };
